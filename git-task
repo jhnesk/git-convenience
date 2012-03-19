@@ -1,0 +1,135 @@
+#!/bin/sh
+# git-task, checkout git branches by grep regex
+#
+# Copyright 2012 Johan Ask
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
+#
+VERSION=0.1
+USAGE="Usage: `basename $0` [-iEPhv] [-r remote] [REGEXP]"
+
+# return value constants:
+SUCCESS=0
+E_ARGS=65
+
+Help ()
+{
+	cat <<EOF
+  $USAGE
+
+  -r REMOTE       use a remote repository
+  -i              interactive, enable ability to choose between ambigious branches
+  -E              use extended regexp
+  -P              use perl regexp
+  -h              display this help and exit
+  -v              output version information and exit
+
+EOF
+}
+
+Version ()
+{
+	echo "`basename $0` version $VERSION"
+}
+
+Checkout ()
+{
+	if [ -z $REMOTE ]
+	then
+		git checkout "$1"
+	else
+		git checkout "$REMOTE/$1"
+	fi
+}
+
+GetBranch ()
+{
+	if [ -z $REMOTE ]
+	then
+		branches=$(git branch | egrep -o '[^[:space:]]*$')
+	else
+		$(git remote show $REMOTE) &>/dev/null
+		if [ $? -ne 0 ]
+		then
+			echo "Remote not found"
+			exit $E_ARGS;
+		fi
+		branches=$(git ls-remote $REMOTE 2>/dev/null | grep '/heads/' | egrep -o '[^\/]*$' | egrep -v 'HEAD$')
+	fi
+	if [ -z $REGEXP ]
+	then
+		BRANCH=$(echo "$branches")
+	else
+		BRANCH=$(echo "$branches" | $GREP "$REGEXP")
+	fi
+}
+
+GREP_ARG=-i
+
+# parse arguments
+while getopts "ilEPr:hv" opt; do
+	case $opt in
+		r) REMOTE=$OPTARG
+			;;
+		v) Version; exit $SUCCESS
+			;;
+		h) Help; exit $SUCCESS
+			;;
+		E) GREP_ARG="$GREP_ARG -E"
+			;;
+		P) GREP_ARG="$GREP_ARG -P"
+			;;
+		i) AMBIGOUOS_ACTION="i"
+			;;
+		*) echo $USAGE; exit $E_ARGS
+			;;
+	esac
+done
+shift $(($OPTIND-1))
+
+REGEXP=$1
+GREP="$(which grep) $GREP_ARG"
+
+GetBranch
+lines=$(echo "$BRANCH"|egrep -v '^$' | wc -l)
+
+if [ $lines -eq 1 ]
+then
+	Checkout $BRANCH
+elif [ $lines -eq 0 ]
+then
+	echo "No branch matches $REGEXP"
+else
+	echo "Ambiguous branches for $REGEXP"
+
+	case $AMBIGOUOS_ACTION in
+		i)
+			echo "$BRANCH" |$GREP --color -n "$REGEXP"
+			echo -n "Select branch: "
+			read choice
+			if [ $choice -gt 0 -a $choice -le $lines ] 2>/dev/null
+			then
+				BRANCH=$(echo "$BRANCH" | head -n$choice |tail -n1)
+				Checkout $BRANCH
+			else
+				echo "Invalid choice"
+			fi
+			;;
+		*)
+			echo "$BRANCH" |$GREP --color "$REGEXP"
+			;;
+	esac
+fi
+
+exit $?
