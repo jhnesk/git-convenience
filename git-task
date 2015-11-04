@@ -78,25 +78,23 @@ GetBranch ()
 GREP_ARG=-i
 
 # parse arguments
-while getopts "ilEPr:hv" opt; do
-	case $opt in
-		r) REMOTE=$OPTARG
-			;;
-		v) Version; exit $SUCCESS
-			;;
-		h) Help; exit $SUCCESS
-			;;
-		E) GREP_ARG="$GREP_ARG -E"
-			;;
-		P) GREP_ARG="$GREP_ARG -P"
-			;;
-		i) AMBIGOUOS_ACTION="i"
-			;;
-		*) echo $USAGE; exit $E_ARGS
-			;;
+OPT="r:iEPvh"
+LONGOPT="remote:,interactive,extended-regexp,-perl-regexp,version,help"
+OPTIONS=$(getopt -o ${OPT} -l ${LONGOPT} -n 'git-task' -- "$@")
+eval set -- "$OPTIONS"
+
+while true; do
+	case "$1" in
+		-r | --remote) REMOTE="$2" ; shift 2 ;;
+		-i | --interactive) AMBIGOUOS_ACTION="i" ; shift ;;
+		-E | --extended-regexp) GREP_ARG="$GREP_ARG -E" ; shift ;;
+		-P | --perl-regexp) GREP_ARG="$GREP_ARG -P" ; shift ;;
+		-v | --version) Version ; exit $SUCCESS ;;
+		-h | --help) Help ; exit $SUCCESS ;;
+		--) shift ; break ;;
+		*) echo $USAGE"." ; exit $E_ARGS ;;
 	esac
 done
-shift $(($OPTIND-1))
 
 REGEXP=$1
 GREP="$(which grep) $GREP_ARG"
