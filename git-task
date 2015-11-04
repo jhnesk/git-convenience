@@ -17,7 +17,8 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
 VERSION=0.1
-USAGE="Usage: `basename $0` [-iEPhv] [-r remote] [REGEXP]"
+NAME=$0
+USAGE="Usage: ${NAME} [-iEPhv] [-r remote] PATTERN"
 
 # return value constants:
 SUCCESS=0
@@ -26,21 +27,25 @@ E_ARGS=65
 Help ()
 {
 	cat <<EOF
-  $USAGE
+Quick access to git branches. Check out branches by pattern matching.
 
-  -r REMOTE       use a remote repository
-  -i              interactive, enable ability to choose between ambigious branches
-  -E              use extended regexp
-  -P              use perl regexp
-  -h              display this help and exit
-  -v              output version information and exit
+$USAGE
 
+Options:
+  -r, --remote=REMOTE    use a remote repository
+  -i, --interactive      enable ability to choose between ambigious branches
+  -E, --extended-regexp  use extended regexp
+  -P, --perl-regexp      use perl regexp
+  -h, --help             display this help and exit
+  -v, --version          output version information and exit
+
+Report bugs to <jhnesk@gmail.com>.
 EOF
 }
 
 Version ()
 {
-	echo "`basename $0` version $VERSION"
+	echo "git-task $VERSION"
 }
 
 Checkout ()
@@ -89,8 +94,8 @@ while true; do
 		-i | --interactive) AMBIGOUOS_ACTION="i" ; shift ;;
 		-E | --extended-regexp) GREP_ARG="$GREP_ARG -E" ; shift ;;
 		-P | --perl-regexp) GREP_ARG="$GREP_ARG -P" ; shift ;;
-		-v | --version) Version ; exit $SUCCESS ;;
 		-h | --help) Help ; exit $SUCCESS ;;
+		-v | --version) Version ; exit $SUCCESS ;;
 		--) shift ; break ;;
 		*) echo $USAGE"." ; exit $E_ARGS ;;
 	esac
