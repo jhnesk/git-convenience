@@ -104,6 +104,13 @@ done
 PATTERN=${1}
 GREP="$(which grep) ${GREP_ARG}"
 
+if [ -z ${PATTERN} ]
+then
+	echo "No pattern specified"
+	echo ${USAGE}
+	exit ${E_ARGS}
+fi
+
 GetBranch
 lines=$(echo "${BRANCH}"|egrep -v '^$' | wc -l)
 
