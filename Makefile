@@ -1,17 +1,29 @@
+PREFIX ?= /usr/local
+MANPREFIX ?= $(PREFIX)/share/man/man1
+
+BIN_INSTALL = $(DESTDIR)$(PREFIX)/bin
+MAN_INSTALL = $(DESTDIR)$(MANPREFIX)
 
 build:
-	mkdir -p build/bin
-	mkdir -p build/man/man1
-	cp git-task build/bin
-	help2man -n git-task -s 1 ./git-task | gzip -c > build/man/man1/git-task.1.gz
+	@mkdir -p build/bin
+	@mkdir -p build/man/man1
+	@cp git-task build/bin
+	@help2man -s 1 \
+		-n git-task \
+		./git-task \
+		| gzip -c > build/man/man1/git-task.1.gz
 
 install:
-	install -m 644 build/man/man1/git-task.1.gz /usr/local/man/man1/git-task.1.gz
-	install -m 755 build/bin/git-task /usr/local/bin/git-task
+	@mkdir -p $(BIN_INSTALL)
+	@echo "... installing executable to $(BIN_INSTALL)"
+	@install -m 755 build/bin/git-task $(BIN_INSTALL)/git-task
+	@mkdir -p $(MAN_INSTALL)
+	@echo "... installing man page to $(MAN_INSTALL)"
+	@install -m 644 build/man/man1/git-task.1.gz $(MAN_INSTALL)/git-task.1.gz
 
 uninstall:
-	rm /usr/local/man/man1/git-task.1.gz
-	rm /usr/local/bin/git-task
+	rm $(BIN_INSTALL)/git-task
+	rm $(MAN_INSTALL)/git-task.1.gz
 
 clean:
 	rm -r build
