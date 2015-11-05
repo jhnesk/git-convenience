@@ -7,7 +7,7 @@ build:
 
 install:
 	install -m 644 build/man/man1/git-task.1.gz /usr/local/man/man1/git-task.1.gz
-	install -m 644 build/bin/git-task /usr/local/bin/git-task
+	install -m 755 build/bin/git-task /usr/local/bin/git-task
 
 uninstall:
 	rm /usr/local/man/man1/git-task.1.gz
