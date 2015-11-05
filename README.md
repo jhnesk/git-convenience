@@ -1,10 +1,21 @@
-git-task
-========
+#git-task
 
-Quick access to git branches. Check out by regexp matching.
+Quick access to git branches. Check out by pattern matching.
 
-License:
---------
+## Installation
+
+You can install this using make. Clone the repository and install
+with make.  The man page is generated with help2man. If you dont have
+this and don't want to install it, either edit the Makefile or install
+by hand (copy the script to preferred location).
+
+```
+git clone git@github.com:jhnesk/git-task.git
+make
+sudo make install
+```
+
+## License
 
 > This program is free software; you can redistribute it and/or modify
 > it under the terms of the GNU General Public License as published by
