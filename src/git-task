@@ -1,5 +1,5 @@
 #!/bin/sh
-# git-task, checkout git branches by grep regex
+# git-task, check out branches by pattern matching.
 #
 # Copyright 2012 Johan Ask
 #
@@ -17,19 +17,21 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
 VERSION=0.1
-NAME=$0
+NAME=${0}
 USAGE="Usage: ${NAME} [-iEPhv] [-r remote] PATTERN"
 
 # return value constants:
 SUCCESS=0
 E_ARGS=65
 
+GREP_ARG=-i
+
 Help ()
 {
 	cat <<EOF
 Quick access to git branches. Check out branches by pattern matching.
 
-$USAGE
+${USAGE}
 
 Options:
   -r, --remote=REMOTE    use a remote repository
@@ -45,92 +47,90 @@ EOF
 
 Version ()
 {
-	echo "git-task $VERSION"
+	echo "git-task ${VERSION}"
 }
 
 Checkout ()
 {
-	if [ -z $REMOTE ]
+	if [ -z ${REMOTE} ]
 	then
-		git checkout "$1"
+		git checkout "${1}"
 	else
-		git checkout "$REMOTE/$1"
+		git checkout "${REMOTE}/${1}"
 	fi
 }
 
 GetBranch ()
 {
-	if [ -z $REMOTE ]
+	if [ -z ${REMOTE} ]
 	then
 		branches=$(git branch | egrep -o '[^[:space:]]*$')
 	else
-		$(git remote show $REMOTE) &>/dev/null
+		$(git remote show ${REMOTE}) &>/dev/null
 		if [ $? -ne 0 ]
 		then
 			echo "Remote not found"
-			exit $E_ARGS;
+			exit ${E_ARGS};
 		fi
-		branches=$(git ls-remote $REMOTE 2>/dev/null | grep '/heads/' | egrep -o '[^\/]*$' | egrep -v 'HEAD$')
+		branches=$(git ls-remote ${REMOTE} 2>/dev/null | grep '/heads/' | egrep -o '[^\/]*$' | egrep -v 'HEAD$')
 	fi
-	if [ -z $REGEXP ]
+	if [ -z ${PATTERN} ]
 	then
-		BRANCH=$(echo "$branches")
+		BRANCH=$(echo "${branches}")
 	else
-		BRANCH=$(echo "$branches" | $GREP "$REGEXP")
+		BRANCH=$(echo "${branches}" | ${GREP} "${PATTERN}")
 	fi
 }
-
-GREP_ARG=-i
 
 # parse arguments
 OPT="r:iEPvh"
 LONGOPT="remote:,interactive,extended-regexp,-perl-regexp,version,help"
 OPTIONS=$(getopt -o ${OPT} -l ${LONGOPT} -n 'git-task' -- "$@")
-eval set -- "$OPTIONS"
+eval set -- "${OPTIONS}"
 
 while true; do
-	case "$1" in
-		-r | --remote) REMOTE="$2" ; shift 2 ;;
+	case "${1}" in
+		-r | --remote) REMOTE="${2}" ; shift 2 ;;
 		-i | --interactive) AMBIGOUOS_ACTION="i" ; shift ;;
-		-E | --extended-regexp) GREP_ARG="$GREP_ARG -E" ; shift ;;
-		-P | --perl-regexp) GREP_ARG="$GREP_ARG -P" ; shift ;;
-		-h | --help) Help ; exit $SUCCESS ;;
-		-v | --version) Version ; exit $SUCCESS ;;
+		-E | --extended-regexp) GREP_ARG="${GREP_ARG} -E" ; shift ;;
+		-P | --perl-regexp) GREP_ARG="${GREP_ARG} -P" ; shift ;;
+		-h | --help) Help ; exit ${SUCCESS} ;;
+		-v | --version) Version ; exit ${SUCCESS} ;;
 		--) shift ; break ;;
-		*) echo $USAGE"." ; exit $E_ARGS ;;
+		*) echo ${USAGE}"." ; exit ${E_ARGS} ;;
 	esac
 done
 
-REGEXP=$1
-GREP="$(which grep) $GREP_ARG"
+PATTERN=${1}
+GREP="$(which grep) ${GREP_ARG}"
 
 GetBranch
-lines=$(echo "$BRANCH"|egrep -v '^$' | wc -l)
+lines=$(echo "${BRANCH}"|egrep -v '^$' | wc -l)
 
-if [ $lines -eq 1 ]
+if [ ${lines} -eq 1 ]
 then
-	Checkout $BRANCH
-elif [ $lines -eq 0 ]
+	Checkout ${BRANCH}
+elif [ ${lines} -eq 0 ]
 then
-	echo "No branch matches $REGEXP"
+	echo "No branch matches ${PATTERN}"
 else
-	echo "Ambiguous branches for $REGEXP"
+	echo "Ambiguous branches for ${PATTERN}"
 
-	case $AMBIGOUOS_ACTION in
+	case ${AMBIGOUOS_ACTION} in
 		i)
-			echo "$BRANCH" |$GREP --color -n "$REGEXP"
+			echo "${BRANCH}" |${GREP} --color -n "${PATTERN}"
 			echo -n "Select branch: "
 			read choice
-			if [ $choice -gt 0 -a $choice -le $lines ] 2>/dev/null
+			if [ ${choice} -gt 0 -a ${choice} -le ${lines} ] 2>/dev/null
 			then
-				BRANCH=$(echo "$BRANCH" | head -n$choice |tail -n1)
-				Checkout $BRANCH
+				BRANCH=$(echo "${BRANCH}" | head -n${choice} |tail -n1)
+				Checkout ${BRANCH}
 			else
 				echo "Invalid choice"
 			fi
 			;;
 		*)
-			echo "$BRANCH" |$GREP --color "$REGEXP"
+			echo "${BRANCH}" | ${GREP} --color "${PATTERN}"
 			;;
 	esac
 fi
