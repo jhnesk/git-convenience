@@ -15,6 +15,12 @@ make
 sudo make install
 ```
 
+In one line, that also removes the repository when done:
+
+```
+git clone git@github.com:jhnesk/git-task.git && cd git-task && make && sudo make install && cd .. && rm -rf git-task
+```
+
 ## License
 
 > This program is free software; you can redistribute it and/or modify
