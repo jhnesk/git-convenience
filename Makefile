@@ -9,7 +9,7 @@ build:
 	@mkdir -p build/man
 	@cp src/git-task build/bin
 	@help2man -s 1 \
-		-n git-task \
+		-n "Check out branches by pattern matching"  \
 		./build/bin/git-task \
 		| gzip -c > build/man/git-task.1.gz
 
